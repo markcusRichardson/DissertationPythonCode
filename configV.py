@@ -1,0 +1,5 @@
+# Brightness variables
+
+# GPS variables
+
+# 
