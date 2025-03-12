@@ -1,5 +1,7 @@
 import serial
 import configV
+import struct
+
 
 
 # Define serial comms variables
@@ -21,15 +23,15 @@ except Exception as e:
 
 
 # Decode incoming serial
-def arduino1_decode(SERIAL){
-    if SERIAL and SERIAL.in_waiting >= 20
+def arduino1_decode(SERIAL):
+    if SERIAL and SERIAL.in_waiting >= 20:
         START = SERIAL.read(1)
 
         if START == bytes([START_BYTE]):
             DATA1 = SERIAL.read(18)
             END = SERIAL.read(1)
 
-            if END == bytes([END_BYTE])
+            if END == bytes([END_BYTE]):
                 try:
                     longitude, latitude, altitude, speed, satellites, date, time, timem, alarm_bool = struct.unpack("fffBHBHB", data)
                     configV.longtitude = longtitude
@@ -45,10 +47,7 @@ def arduino1_decode(SERIAL){
                     print(f"Decoding Error: {e}")
 
 
-
-}
-
-def arduino2_decode(SERIAL){
+def arduino2_decode(SERIAL):
  if SERIAL and SERIAL.in_waiting >= 5
         START = SERIAL.read(1)
 
@@ -60,7 +59,7 @@ def arduino2_decode(SERIAL){
                 configV.segments = segments
 
 
-}
+
 
 def arduino_encode(serial_port, mode,brightnessFront, brightnessRear lock_state, alarm_state):
 
