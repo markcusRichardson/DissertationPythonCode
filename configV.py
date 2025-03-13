@@ -3,6 +3,8 @@ mode = 0
 lock_state = False
 brightnessFront = 0
 brightnessRear = 0
+brightnessMiddle = 0
+brightnessLogo = 0
 
 # GPS variables
 longitude = 0

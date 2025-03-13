@@ -1,42 +1,16 @@
 from gpiozero import RotaryEncoder, Button
 import tkinter as tk
-from tkinter import ttk
+import threading
+import configV
+import time
 
 
-# Rotary encoder 
-menu = ["Brightness"]
+# Rotary encoder setup variables
 current_option = 0
 rotary = RotaryEncoder(17, 18, max_steps=10)
 button = Button(27)
 
-
-
-# Screen setup
-root = tk.Tk()
-root.title("E-Bike dashbaoridng")
-root.geometry("1920x1080")
-root.configure(bg="black")
-menu_label = tk.Label(root, text=menu[current_option], font=("Helvetica", 48), fg="white", bg="black")
-menu_label.pack(pady=200)
-
-
-
-# Rotary encoder menu scolling UI
-def scroll_menu ():
-	global current_option
-	current_option = rotary.steps % len(menu)
-	print(f"selected: {menu[current_option]}")
-def select_option():
-	print(f"Clicked: {menu[current_option]}")
-	if menu[current_option] == "exit":
-		print("Exiting program...")
-		exit()
-rotary.when_rotated = scroll_menu
-button.when_pressed = select_option
-
-# ========
-# MENU SYSTEM VARIABLES
-# ========
+# MENU setup variables
 menu_struc = {
 	"Main Menu":["Security, Modes, Brightness"], 
 	"Security":["Lock", "Unlock"], 
@@ -44,32 +18,65 @@ menu_struc = {
 	"Brightness":["Front Lights", "Rear Lights", "Logo Lights", "Middle Lights"]
 }
 
-Brightness_setting = {
-	"Front lights":50,
-	"Rear lights": 50,
-	"logo lights": 50,
-	"Middle lights": 50
-}
-
 current_menu = "Main Menu"
 current_option_index = 0
 submenu_init = False  
 
 
-# Labels for UI
-menu_label = tk.Label(root, text="", font=("Helvetica", 24), fg="white", bg="black")
-menu_label.pack(pady=20)
-info_label = tk.Label(root, text="", font=("Helvetica", 18), fg="white", bg="black")
-info_label.pack(pady=10)
+# SETUP the display
+
+def dashboard_setup():
+    global root, title_label, time_label, menu_label, speed_label, coordinates_label, brightness_label
+
+    root = tk.Tk()
+    root.title("Ebike dashboard")
+    root.geometry("1920x1080")
+    root.configure(bg="black")
+
+    # Top Section (Title & Time)
+    title_label = tk.Label(root, text="E-Bike Dashboard", font=("Helvetica", 36), fg="white", bg="black")
+    title_label.grid(row=0, column=1, columnspan=2, pady=10, sticky="n")
+
+    time_label = tk.Label(root, text="Time: 00:00", font=("Helvetica", 24), fg="white", bg="black")
+    time_label.grid(row=0, column=2, padx=20, sticky="ne")
+
+    # Left Section (Menu)
+    menu_label = tk.Label(root, text="Menu", font=("Helvetica", 24), fg="white", bg="black")
+    menu_label.grid(row=1, column=0, rowspan=4, padx=20, sticky="w")
+
+    # Center Section (Speed)
+    speed_label = tk.Label(root, text="Speed: 0 km/h", font=("Helvetica", 50), fg="white", bg="black")
+    speed_label.grid(row=2, column=1, pady=20, sticky="nsew")
+
+    # Top Right Section (Coordinates)
+    coordinates_label = tk.Label(root, text="GPS: 0.000, 0.000", font=("Helvetica", 24), fg="white", bg="black")
+    coordinates_label.grid(row=1, column=2, padx=20, sticky="ne")
+
+    # Bottom Right Section (Brightness Levels)
+    brightness_label = tk.Label(root, text="Brightness\nFront: 0\nMiddle: 0\nRear: 0", font=("Helvetica", 20), fg="white", bg="black", justify="left")
+    brightness_label.grid(row=3, column=2, padx=20, sticky="se")
+
+
+def update_display():
+	speed_label.config(text=f"Speed: {configV.speed} km/h")
+	coordinates_label.config(text=f"GPS: {configV.latitude}, {configV.longitude}")
+	time_label.config(text=f"Time: {configV.time}")
+	brightness_label.config(text=f"Brightness\nFront: {configV.brightnessFront}\nMiddle: {configV.brightnessMiddle}\nRear: {configV.brightnessRear}")
+	root.after(100, update_display)  # Re-run every 1 second
 
 def menu_Update_display():
-	global current_menu, current_option_index
-	menu_options = menu_struc[current_menu]
+    global current_menu, current_option_index
+    menu_options = menu_struc[current_menu]
 
-	displayed_menu = "/n".join([f">{option}"]) 
-	if i == current_option_index else option
-	for i, option in enumertae(menu_options)
+    displayed_menu = "\n".join([
+        f"> {option}" if i == current_option_index else option
+        for i, option in enumerate(menu_options)
+    ])
 
+    menu_label.config(text=displayed_menu)
+
+
+# Rotary encoder menu scolling UI
 def scroll_menu():
     global current_option_index, submenu_init, current_menu
     menu_options = menu_struc[current_menu]
@@ -77,9 +84,9 @@ def scroll_menu():
     menu_Update_display()
 
 def select_current_option():
-	global current_menu, submenu_init, current_option_index
+	global current_menu, submenu_init, current_option_index, menu_struc
 
-	selected_option = menu_structure[current_menu][current_option_index]
+	selected_option = menu_struc[current_menu][current_option_index]
 
 	if current_menu == "Main Menu":
 		current_menu = selected_option
@@ -95,49 +102,51 @@ def select_current_option():
 		current_menu == "Modes"
 		menu_Update_display()
 
+# Adjust brigtness
 def adjust_brightness(section):
 
-    global brightness_levels, current_menu, current_option_index
+    global current_menu, current_option_index
 
     print(f"Adjusting {section} brightness... Turn encoder to change level.")
 
-    def brightness_adjust():
-        global brightness_levels
-        while True:
-            brightness_levels[section] = min(100, max(1, brightness_levels[section] + 1))
-            print(f"{section} Brightness: {brightness_levels[section]}%")
-            time.sleep(0.2)  # Small delay to prevent fast scrolling
+    def brightness_adjust(): 
+        if section == "Front Lights":
+            configV.brightnessFront = min(100, max(0, configV.brightnessFront + 1))
+            brightness_label.config(text=f"Front Brightness: {configV.brightnessFront}%")
+            print(f"Front Lights Brightness: {configV.brightnessFront}%")
 
-    rotary.when_rotated = brightness_adjust
-    button.when_pressed = lambda: exit_brightness(section)
+        elif section == "Rear Lights":
+            configV.brightnessRear = min(100, max(0, configV.brightnessRear + 1))
+            brightness_label.config(text=f"Rear Brightness: {configV.brightnessRear}%")
+            print(f"Rear Lights Brightness: {configV.brightnessRear}%")
+
+        elif section == "Logo Lights":
+            configV.brightnessLogo = min(100, max(0, configV.brightnessLogo + 1))
+            brightness_label.config(text=f"Logo Brightness: {configV.brightnessLogo}%")
+            print(f"Logo Lights Brightness: {configV.brightnessLogo}%")
+
+        elif section == "Middle Lights":
+            configV.brightnessMiddle = min(100, max(0, configV.brightnessMiddle + 1))
+            brightness_label.config(text=f"Middle Brightness: {configV.brightnessMiddle}%")
+            print(f"Middle Lights Brightness: {configV.brightnessMiddle}%")
+
+
+
 
 def exit_brightness(section):
     global current_menu
-    print(f"{section} brightness set to {brightness_levels[section]}%")
+    print(f"{section} brightness set ")
     current_menu = "Main Menu"
-    update_menu_display()
-
-rotary.when_rotated = scroll_menu
-button.when_pressed = select_option
+    menu_Update_display()
 
 
-# Rotary encoder menu scolling UI
-def scroll_menu ():
-	global current_option
-	current_option = rotary.steps % len(menu)
-	print(f"selected: {menu[current_option]}")
-def select_option():
-	print(f"Clicked: {menu[current_option]}")
-	if menu[current_option] == "exit":
-		print("Exiting program...")
-		exit()
-		
+dashboard_setup()
+update_display()
+root.mainloop()
 
-threadScreen = threading.Thread(target=ScreenUpdates, daemon=True)
-
-while (True){
-	
-rotary.when_rotated = scroll_menu
-button.when_pressed = select_option
-}
-
+while True:
+	rotary.when_rotated = scroll_menu
+	button.when_pressed = select_current_option
+	rotary.when_rotated = brightness_adjust
+	button.when_pressed = lambda: exit_brightness(section)
+	time.sleep(0.1)
