@@ -58,11 +58,11 @@ def arduino2_decode(SERIAL):
                 configV.segments = segments
 
 # Encode and send data to Arduino
-def arduino_encode(serial_port, mode, brightnessFront, brightnessRear, brightnessMiddle, lock_state, alarm_state):
+def arduino_encode(serial_port, mode, brightnessFront, brightnessRear, brightnessMiddle, lock_state, alarm_state, brightnessLogo):
     if serial_port:
         try:
             # Ensure we send **7 bytes** (to match Arduino `Serial.readBytes()`)
-            packet = struct.pack("BBBBBBB", mode, lock_state, alarm_state, brightnessFront, brightnessMiddle, brightnessRear, 0)  # Extra byte for safety
+            packet = struct.pack("BBBBBBB", mode, lock_state, alarm_state, brightnessFront, brightnessMiddle, brightnessRear, brightnessLogo)  # Extra byte for safety
 
             serial_port.write(bytes([START_BYTE]))
             serial_port.write(packet)
@@ -76,4 +76,4 @@ while True:
     arduino1_decode(arduino_1)
     arduino2_decode(arduino_2)
 
-    arduino_encode(arduino_1, configV.mode, configV.brightnessFront, configV.brightnessRear, configV.brightnessMiddle, configV.lock_state, configV.alarm_bool)
+    arduino_encode(arduino_1, configV.mode, configV.brightnessFront, configV.brightnessRear, configV.brightnessMiddle, configV.lock_state, configV.alarm_bool, configV.brightnessLogo)
