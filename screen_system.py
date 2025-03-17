@@ -21,6 +21,10 @@ menu_struc = {
 current_menu = "Main Menu"
 current_option_index = 0
 submenu_init = False  
+root = tk.Tk()
+root.overrideredirect(True)
+root.attributes("-fullscreen", True)
+root.configure(bg="black")
 
 
 # SETUP the display
@@ -28,7 +32,7 @@ submenu_init = False
 def dashboard_setup():
     global root, title_label, time_label, menu_label, speed_label, coordinates_label, brightness_label
 
-    root = tk.Tk()
+    
     root.title("Ebike dashboard")
     root.geometry("1920x1080")
     root.configure(bg="black")
@@ -69,9 +73,9 @@ def menu_Update_display():
     menu_options = menu_struc[current_menu]
 
     displayed_menu = "\n".join([
-        f"> {option}" if i == current_option_index else option
-        for i, option in enumerate(menu_options)
-    ])
+    f"> {option}" if i == current_option_index else option
+    for i, option in enumerate(menu_options)
+	])
 
     menu_label.config(text=displayed_menu)
 
@@ -135,18 +139,35 @@ def adjust_brightness(section):
 
 def exit_brightness(section):
     global current_menu
-    print(f"{section} brightness set ")
-    current_menu = "Main Menu"
+
+    # Ensure the correct brightness setting is stored in configV
+    if section == "Front Lights":
+        configV.brightnessFront = min(100, max(0, configV.brightnessFront))
+        print(f"✅ Front Lights Brightness set to {configV.brightnessFront}%")
+
+    elif section == "Rear Lights":
+        configV.brightnessRear = min(100, max(0, configV.brightnessRear))
+        print(f"✅ Rear Lights Brightness set to {configV.brightnessRear}%")
+
+    elif section == "Logo Lights":
+        configV.brightnessLogo = min(100, max(0, configV.brightnessLogo))
+        print(f"✅ Logo Lights Brightness set to {configV.brightnessLogo}%")
+
+    elif section == "Middle Lights":
+        configV.brightnessMiddle = min(100, max(0, configV.brightnessMiddle))
+        print(f"✅ Middle Lights Brightness set to {configV.brightnessMiddle}%")
+
+    # Switch back to the main menu
+    configV.current_menu = "Main Menu"
     menu_Update_display()
 
 
 dashboard_setup()
 update_display()
 root.mainloop()
+rotary.when_rotated = scroll_menu
+button.when_pressed = select_current_option
+rotary.when_rotated = lambda: adjust_brightness(current_option)
+button.when_pressed = lambda: exit_brightness(current_option)
 
-while True:
-	rotary.when_rotated = scroll_menu
-	button.when_pressed = select_current_option
-	rotary.when_rotated = brightness_adjust
-	button.when_pressed = lambda: exit_brightness(section)
-	time.sleep(0.1)
+

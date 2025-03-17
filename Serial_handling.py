@@ -1,6 +1,8 @@
 import serial
 import struct
 import configV
+import time
+import sys
 
 # Define serial communication
 SERIAL_PORT_1 = "/dev/ttyUSB0"
@@ -18,13 +20,13 @@ except Exception as e:
     arduino_1, arduino_2 = None, None
 
 # Decode data from Arduino 1
-def arduino1_decode(SERIAL):
-    if SERIAL and SERIAL.in_waiting >= 20:
-        START = SERIAL.read(1)
+def arduino1_decode(PORT_SERIAL):
+    if PORT_SERIAL and PORT_SERIAL.in_waiting >= 20:
+        START = PORT_SERIAL.read(1)
 
         if START == bytes([START_BYTE]):
-            DATA1 = SERIAL.read(18)
-            END = SERIAL.read(1)
+            DATA1 = PORT_SERIAL.read(18)
+            END = PORT_SERIAL.read(1)
 
             if END == bytes([END_BYTE]):
                 try:
@@ -44,14 +46,14 @@ def arduino1_decode(SERIAL):
                     print(f"Decoding Error: {e}")
 
 # Decode data from Arduino 2
-def arduino2_decode(SERIAL):
-    if SERIAL and SERIAL.in_waiting >= 5:
-        START = SERIAL.read(1)
+def arduino2_decode(PORT_SERIAL1):
+    if PORT_SERIAL1 and PORT_SERIAL1.in_waiting >= 5:
+        START = PORT_SERIAL1.read(1)
 
         if START == bytes([START_BYTE]):
-            radar_reading = int.from_bytes(SERIAL.read(1), "little")
-            segments = list(SERIAL.read(2))
-            END = SERIAL.read(1)
+            radar_reading = int.from_bytes(PORT_SERIAL1.read(1), "little")
+            segments = list(PORT_SERIAL1.read(2))
+            END = PORT_SERIAL1.read(1)
 
             if END == bytes([END_BYTE]):
                 configV.radar_reading = radar_reading
@@ -59,6 +61,8 @@ def arduino2_decode(SERIAL):
 
 # Encode and send data to Arduino
 def arduino_encode(serial_port, mode, brightnessFront, brightnessRear, brightnessMiddle, lock_state, alarm_state, brightnessLogo):
+    if serial_port is None:
+        return
     if serial_port:
         try:
             # Ensure we send **7 bytes** (to match Arduino `Serial.readBytes()`)
@@ -73,7 +77,12 @@ def arduino_encode(serial_port, mode, brightnessFront, brightnessRear, brightnes
 
 # Continuous Reading & Writing Loop
 while True:
+    if not arduino_1 or not arduino_2:
+        print("⚠️ Warning: Arduinos not connected. Skipping serial communication.")
+        time.sleep(1)  # Small delay to prevent CPU overuse
+        continue  # Skip the rest of the loop
+
     arduino1_decode(arduino_1)
     arduino2_decode(arduino_2)
-
     arduino_encode(arduino_1, configV.mode, configV.brightnessFront, configV.brightnessRear, configV.brightnessMiddle, configV.lock_state, configV.alarm_bool, configV.brightnessLogo)
+    time.sleep(0.1)

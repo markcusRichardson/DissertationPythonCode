@@ -19,7 +19,7 @@ alarm_bool = False
 
 # Radar and IR variables
 radar_reading = 0
-segments = []
+segments = [0,0,0,0]
 
 
 

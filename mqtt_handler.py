@@ -1,5 +1,6 @@
 import paho.mqtt.client as mqtt
 import configV  # Configuration file for global variables
+import time
 
 # MQTT Configuration
 MQTT_BROKER = "localhost"  # Use the Raspberry Pi as the broker
@@ -49,8 +50,11 @@ def publish_alarm():
     client.publish(MQTT_TOPIC_ALARM, "ALARM TRIGGERED")
 
 def publish_gps():
+    if configV.latitude is None or configV.longitude is None or configV.satellites is None:
+        return
     gps_data = f"{configV.latitude},{configV.longitude},{configV.satellites}"
     client.publish(MQTT_TOPIC_GPS, gps_data)
+
 
 # Setup MQTT Callbacks
 client.on_connect = on_connect
@@ -64,8 +68,9 @@ client.loop_start()
 
 # Simulated Alarm Trigger (For Testing)
 while True:
-    if configV.Alarm_bool == True:
+    if configV.alarm_bool == True:
         publish_alarm()
         publish_gps()
+        time.sleep(0.1)
 
 
