@@ -3,8 +3,7 @@ import tkinter as tk
 import threading
 import configV
 import time
-import Serial_handling
-import mqtt_handler
+
 
 # Rotary encoder setup variables
 current_option = 0
@@ -171,11 +170,4 @@ button.when_pressed = select_current_option
 rotary.when_rotated = lambda: adjust_brightness(current_option)
 button.when_pressed = lambda: exit_brightness(current_option)
 
-# Create threads for each task
-serial_thread = threading.Thread(target=Serial_handling.serial_task, daemon=True)
-mqtt_thread = threading.Thread(target=mqtt_handler.mqtt_task, daemon=True)
-
-# Start all threads
-serial_thread.start()
-mqtt_thread.start()
 

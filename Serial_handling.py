@@ -77,12 +77,26 @@ def arduino_encode(serial_port, mode, brightnessFront, brightnessRear, brightnes
 
 # Continuous Reading & Writing Loop
 while True:
-    if not arduino_1 or not arduino_2:
-        print("⚠️ Warning: Arduinos not connected. Skipping serial communication.")
-        time.sleep(1)  # Small delay to prevent CPU overuse
-        continue  # Skip the rest of the loop
+    # Check if Arduinos are disconnected and retry connection
+    if arduino_1 is None or arduino_2 is None:
+        print("⚠️ Arduinos not connected. Retrying connection...")
+        try:
+            if arduino_1 is None:
+                arduino_1 = serial.Serial(SERIAL_PORT_1, BAUD_RATE, timeout=1)
+                print("✅ Arduino 1 reconnected!")
 
+            if arduino_2 is None:
+                arduino_2 = serial.Serial(SERIAL_PORT_2, BAUD_RATE, timeout=1)
+                print("✅ Arduino 2 reconnected!")
+
+        except Exception as e:
+            print(f" Serial Error: {e}")
+            time.sleep(5)  # Wait before retrying
+            continue  # Skip loop iteration if reconnection fails
+
+    # Process Serial Data if Arduinos are connected
     arduino1_decode(arduino_1)
     arduino2_decode(arduino_2)
     arduino_encode(arduino_1, configV.mode, configV.brightnessFront, configV.brightnessRear, configV.brightnessMiddle, configV.lock_state, configV.alarm_bool, configV.brightnessLogo)
+    
     time.sleep(0.1)
