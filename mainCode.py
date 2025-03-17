@@ -6,7 +6,9 @@ import screen_system
 # Create threads for each task
 serial_thread = threading.Thread(target=Serial_handling.serial_task, daemon=True)
 mqtt_thread = threading.Thread(target=mqtt_handler.mqtt_task, daemon=True)
-screen_thread = threading.Thread(target=screen_system.screen_task, daemon=True)
+
+
+
 
 # Start all threads
 serial_thread.start()
