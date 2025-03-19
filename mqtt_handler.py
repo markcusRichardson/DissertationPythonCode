@@ -56,21 +56,16 @@ def publish_gps():
     client.publish(MQTT_TOPIC_GPS, gps_data)
 
 
-# Setup MQTT Callbacks
-client.on_connect = on_connect
-client.on_message = on_message
-
-# Connect to MQTT Broker
-client.connect(MQTT_BROKER, MQTT_PORT, 60)
-
 # Start the MQTT Loop
-client.loop_start()
-
-# Simulated Alarm Trigger (For Testing)
-while True:
+def mqtt_task():
+    client.on_connect = on_connect
+    client.on_message = on_message
+    client.connect(MQTT_BROKER, MQTT_PORT, 60)
     if configV.alarm_bool == True:
         publish_alarm()
         publish_gps()
         time.sleep(0.1)
+
+
 
 

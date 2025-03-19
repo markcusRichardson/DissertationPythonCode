@@ -30,7 +30,7 @@ root.configure(bg="black")
 # SETUP the display
 
 def dashboard_setup():
-    global root, title_label, time_label, menu_label, speed_label, coordinates_label, brightness_label
+    global canvas, left_circle, middle_circle, right_circle, root, title_label, time_label, menu_label, speed_label, coordinates_label, brightness_label
 
     
     root.title("Ebike dashboard")
@@ -60,12 +60,23 @@ def dashboard_setup():
     brightness_label = tk.Label(root, text="Brightness\nFront: 0\nMiddle: 0\nRear: 0", font=("Helvetica", 20), fg="white", bg="black", justify="left")
     brightness_label.grid(row=3, column=2, padx=20, sticky="se")
 
+     # Bottom Right Section (Brightness Levels)
+    canvas = tk.Canvas(root, width=300, height=150, bg="black", highlightthickness=0)
+    canvas.grid(row=3, column=2, padx=20, pady=20)
+    left_circle = canvas.create_rectangle(20, 50, 70, 100, fill="green")    
+    middle_circle = canvas.create_rectangle(120, 50, 170, 100, fill="green") 
+    right_circle = canvas.create_rectangle(220, 50, 270, 100, fill="green")  
+
 
 def update_display():
 	speed_label.config(text=f"Speed: {configV.speed} km/h")
 	coordinates_label.config(text=f"GPS: {configV.latitude}, {configV.longitude}")
 	time_label.config(text=f"Time: {configV.time}")
 	brightness_label.config(text=f"Brightness\nFront: {configV.brightnessFront}\nMiddle: {configV.brightnessMiddle}\nRear: {configV.brightnessRear}")
+    canvas.itemconfig(left_circle, fill="red" if left else "green")
+    canvas.itemconfig(middle_circle, fill="red" if middle_left else "green")
+    canvas.itemconfig(middle_circle, fill="red" if middle_right else "green")
+    canvas.itemconfig(right_circle, fill="red" if right else "green")
 	root.after(100, update_display)  # Re-run every 1 second
 
 def menu_Update_display():
@@ -160,7 +171,15 @@ def exit_brightness(section):
     # Switch back to the main menu
     configV.current_menu = "Main Menu"
     menu_Update_display()
-
+    
+def radar_detection():
+    global Detetction, left, middle_left, middle_right, right
+    Detection = configV.segments
+    left = True if Detection[0] == 1 else False
+    middle_left = True if Detection[1] == 1 else False
+    middle_right = True if Detection[2] == 1 else False
+    right = True if Detection[3] == 1 else False
+    
 
 dashboard_setup()
 update_display()

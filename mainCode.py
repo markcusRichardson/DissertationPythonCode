@@ -21,5 +21,5 @@ if __name__ == "__main__":
     gui_thread = threading.Thread(target=run_gui, daemon=True)  # Run GUI in a separate thread
     gui_thread.start()
 
-    while True:
-        time.sleep(0.1)  # Keep the script running
+while True:
+    time.sleep(0.1)  # Keep the script running
