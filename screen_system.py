@@ -135,14 +135,12 @@ def exit_brightness(section):
     menu_Update_display()
 
 # Initialize GUI and event handlers
-dashboard_setup()
-update_display()
+def start_screen():
+    dashboard_setup()
+    update_display()
+    rotary.when_rotated = scroll_menu
+    button.when_pressed = select_current_option
+    rotary.when_rotated = lambda: adjust_brightness(current_option)
+    button.when_pressed = lambda: exit_brightness(current_option)
+    root.mainloop()
 
-# Bind Rotary Encoder & Button events
-rotary.when_rotated = scroll_menu
-button.when_pressed = select_current_option
-rotary.when_rotated = lambda: adjust_brightness(current_option)
-button.when_pressed = lambda: exit_brightness(current_option)
-
-# Run GUI
-root.mainloop()
