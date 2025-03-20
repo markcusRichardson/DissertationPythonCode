@@ -27,6 +27,7 @@ def on_connect(client, userdata, flags, rc):
     client.subscribe(MQTT_TOPIC_MODE)
     client.subscribe(MQTT_TOPIC_RADAR)  # Subscribe to radar topic
 
+
 def on_message(client, userdata, msg):
     topic = msg.topic
     payload = msg.payload.decode()
@@ -37,6 +38,7 @@ def on_message(client, userdata, msg):
 
     elif topic == MQTT_TOPIC_BRIGHTNESS_FRONT:
         configV.brightnessFront = int(payload)
+        print(f"[DEBUG] configV.brightnessFront updated: {configV.brightnessFront}")
 
     elif topic == MQTT_TOPIC_BRIGHTNESS_MIDDLE:
         configV.brightnessMiddle = int(payload)
