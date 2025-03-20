@@ -1,6 +1,7 @@
 import paho.mqtt.client as mqtt
 import configV  # Configuration file for global variables
 import time
+import threading
 
 # MQTT Configuration
 MQTT_BROKER = "localhost"  # Use the Raspberry Pi as the broker
@@ -61,15 +62,17 @@ def publish_gps():
     print(f"[MQTT] Publishing GPS data: {gps_data}")
     client.publish(MQTT_TOPIC_GPS, gps_data)
 
+def Check_alarm():
+    if configV.alarm_bool:
+        publish_alarm()
+        publish_gps()
+
 # Start the MQTT Loop
 def mqtt_task():
     client.on_connect = on_connect
     client.on_message = on_message
     client.connect(MQTT_BROKER, MQTT_PORT, 60)
     client.loop_start()  # Runs in the background
-    
-    while True:
-        if configV.alarm_bool:
-            publish_alarm()
-            publish_gps()
-        time.sleep(0.1)
+     # Start Alarm Checking in a Separate Thread
+    alarm_thread = threading.Thread(target=Check_alarm, daemon=True)
+    alarm_thread.start()
