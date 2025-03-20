@@ -6,8 +6,9 @@ import time
 
 # Rotary encoder setup variables
 current_option = 0
-rotary = RotaryEncoder(17, 18, max_steps=10)
-button = Button(27)
+if 'rotary' not in globals():
+    rotary = RotaryEncoder(17, 18, max_steps=10)
+    button = Button(27)
 
 # MENU setup variables
 menu_struc = {
