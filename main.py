@@ -27,42 +27,39 @@ submenu_init = False
 root = tk.Tk()
 setup_done = False
 # SETUP the display
-def dashboard_setup():
-    if setup_done:
-        return  # If already run, exit immediately
-    global root, title_label, time_label, menu_label, speed_label, coordinates_label, brightness_label
-    # Rotary encoder setup variables
+
+# Rotary encoder setup variables
     
-    root.overrideredirect(True)
-    root.attributes("-fullscreen", True)
-    root.configure(bg="black")  
-    root.title("Ebike dashboard")
-    root.geometry("1920x1080")
-    root.configure(bg="black")
+root.overrideredirect(True)
+root.attributes("-fullscreen", True)
+root.configure(bg="black")  
+root.title("Ebike dashboard")
+root.geometry("1920x1080")
+root.configure(bg="black")
 
 
-    # Top Section (Title & Time)
-    title_label = tk.Label(root, text="E-Bike Dashboard", font=("Helvetica", 36), fg="white", bg="black")
-    title_label.grid(row=0, column=1, columnspan=2, pady=10, sticky="n")
+# Top Section (Title & Time)
+title_label = tk.Label(root, text="E-Bike Dashboard", font=("Helvetica", 36), fg="white", bg="black")
+title_label.grid(row=0, column=1, columnspan=2, pady=10, sticky="n")
 
-    time_label = tk.Label(root, text="Time: 00:00", font=("Helvetica", 24), fg="white", bg="black")
-    time_label.grid(row=0, column=2, padx=20, sticky="ne")
+time_label = tk.Label(root, text="Time: 00:00", font=("Helvetica", 24), fg="white", bg="black")
+time_label.grid(row=0, column=2, padx=20, sticky="ne")
 
-    # Left Section (Menu)
-    menu_label = tk.Label(root, text="Menu", font=("Helvetica", 24), fg="white", bg="black")
-    menu_label.grid(row=1, column=0, rowspan=4, padx=20, sticky="w")
+# Left Section (Menu)
+menu_label = tk.Label(root, text="Menu", font=("Helvetica", 24), fg="white", bg="black")
+menu_label.grid(row=1, column=0, rowspan=4, padx=20, sticky="w")
 
-    # Center Section (Speed)
-    speed_label = tk.Label(root, text="Speed: 0 km/h", font=("Helvetica", 50), fg="white", bg="black")
-    speed_label.grid(row=2, column=1, pady=20, sticky="nsew")
+# Center Section (Speed)
+speed_label = tk.Label(root, text="Speed: 0 km/h", font=("Helvetica", 50), fg="white", bg="black")
+speed_label.grid(row=2, column=1, pady=20, sticky="nsew")
 
-    # Top Right Section (Coordinates)
-    coordinates_label = tk.Label(root, text="GPS: 0.000, 0.000", font=("Helvetica", 24), fg="white", bg="black")
-    coordinates_label.grid(row=1, column=2, padx=20, sticky="ne")
+# Top Right Section (Coordinates)
+coordinates_label = tk.Label(root, text="GPS: 0.000, 0.000", font=("Helvetica", 24), fg="white", bg="black")
+coordinates_label.grid(row=1, column=2, padx=20, sticky="ne")
 
-    # Bottom Right Section (Brightness Levels)
-    brightness_label = tk.Label(root, text="Brightness\nFront: 0\nMiddle: 0\nRear: 0", font=("Helvetica", 20), fg="white", bg="black", justify="left")
-    brightness_label.grid(row=3, column=2, padx=20, sticky="se")
+# Bottom Right Section (Brightness Levels)
+brightness_label = tk.Label(root, text="Brightness\nFront: 0\nMiddle: 0\nRear: 0", font=("Helvetica", 20), fg="white", bg="black", justify="left")
+brightness_label.grid(row=3, column=2, padx=20, sticky="se")
 
 def update_display():
 	speed_label.config(text=f"Speed: {configV.speed} km/h")
@@ -173,7 +170,6 @@ def start_threads():
 
 
 start_threads()
-dashboard_setup()
 setup_done = True
 update_display()
 rotary.when_rotated = scroll_menu

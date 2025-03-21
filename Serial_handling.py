@@ -15,7 +15,7 @@ def connect_arduino(port):
     try:
         return serial.Serial(port, BAUD_RATE, timeout=1)
     except Exception as e:
-        print(f"⚠️ Warning: Could not connect to {port}: {e}")
+        # print(f"⚠️ Warning: Could not connect to {port}: {e}")
         return None
 
 arduino_1 = connect_arduino(SERIAL_PORT_1)

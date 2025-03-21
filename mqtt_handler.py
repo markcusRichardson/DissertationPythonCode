@@ -4,21 +4,22 @@ import time
 import threading
 
 # MQTT Configuration
-MQTT_BROKER = "localhost"
-MQTT_PORT = 1883
-MQTT_TOPIC_LOCK = "bike/lock"
-MQTT_TOPIC_BRIGHTNESS_FRONT = "bike/brightness/front"
-MQTT_TOPIC_BRIGHTNESS_MIDDLE = "bike/brightness/middle"
-MQTT_TOPIC_BRIGHTNESS_REAR = "bike/brightness/rear"
-MQTT_TOPIC_MODE = "bike/mode"
-MQTT_TOPIC_ALARM = "bike/alarm"
-MQTT_TOPIC_GPS = "bike/gps"
-MQTT_TOPIC_RADAR = "bike/radar"
+BROKER = "localhost"
+PORT = 1883
+TOPIC_LOCK = "bike/lock"
+TOPIC_BRIGHTNESS_FRONT = "bike/brightness/front"
+TOPIC_BRIGHTNESS_MIDDLE = "bike/brightness/middle"
+TOPIC_BRIGHTNESS_REAR = "bike/brightness/rear"
+TOPIC_MODE = "bike/mode"
+TOPIC_ALARM = "bike/alarm"
+TOPIC_GPS = "bike/gps"
+TOPIC_RADAR = "bike/radar"
 
 # MQTT Client Setup
 client = mqtt.Client()
 
 def on_connect(client, userdata, flags, rc):
+    print("Connected mate")
     """Handles successful MQTT connection and re-subscribes to topics."""
     if rc == 0:
         print("[MQTT] Connected Successfully!")
@@ -26,12 +27,12 @@ def on_connect(client, userdata, flags, rc):
         print(f"[MQTT] Connection failed with code {rc}")
 
     # ✅ Ensure re-subscription after reconnection
-    client.subscribe(MQTT_TOPIC_LOCK)
-    client.subscribe(MQTT_TOPIC_BRIGHTNESS_FRONT)
-    client.subscribe(MQTT_TOPIC_BRIGHTNESS_MIDDLE)
-    client.subscribe(MQTT_TOPIC_BRIGHTNESS_REAR)
-    client.subscribe(MQTT_TOPIC_MODE)
-    client.subscribe(MQTT_TOPIC_RADAR)
+    client.subscribe(TOPIC_LOCK)
+    client.subscribe(TOPIC_BRIGHTNESS_FRONT)
+    client.subscribe(TOPIC_BRIGHTNESS_MIDDLE)
+    client.subscribe(TOPIC_BRIGHTNESS_REAR)
+    client.subscribe(TOPIC_MODE)
+    client.subscribe(TOPIC_RADAR)
 
 def on_message(client, userdata, msg):
     """Processes incoming MQTT messages."""
@@ -39,46 +40,38 @@ def on_message(client, userdata, msg):
     payload = msg.payload.decode()
     print(f"[MQTT] Received on {topic}: {payload}")
 
-    if topic == MQTT_TOPIC_LOCK:
+    if topic == TOPIC_LOCK:
         configV.lock_state = (payload == "lock")
 
-    elif topic == MQTT_TOPIC_BRIGHTNESS_FRONT:
+    elif topic == TOPIC_BRIGHTNESS_FRONT:
         print(f"[DEBUG] Before: {configV.brightnessFront}")
         configV.brightnessFront = int(payload)
         print(f"[DEBUG] After: {configV.brightnessFront}")
         configV.display_update_needed = True  # ✅ Notify GUI of updates
 
-    elif topic == MQTT_TOPIC_BRIGHTNESS_MIDDLE:
+    elif topic == TOPIC_BRIGHTNESS_MIDDLE:
         configV.brightnessMiddle = int(payload)
 
-    elif topic == MQTT_TOPIC_BRIGHTNESS_REAR:
+    elif topic == TOPIC_BRIGHTNESS_REAR:
         configV.brightnessRear = int(payload)
 
-    elif topic == MQTT_TOPIC_MODE:
+    elif topic == TOPIC_MODE:
         configV.mode = int(payload)
 
-    elif topic == MQTT_TOPIC_RADAR:
+    elif topic == TOPIC_RADAR:
         configV.radar_alert = (payload == "detected")
         print("[ALERT] Radar detected an object!")
 
 def publish_alarm():
-    """Publishes an alarm trigger message."""
-    result = client.publish(MQTT_TOPIC_ALARM, "ALARM TRIGGERED")
-    if result.rc == mqtt.MQTT_ERR_SUCCESS:
-        print("[MQTT] Alarm Published!")
-    else:
-        print("[MQTT] Failed to Publish Alarm!")
+    result = client.publish(TOPIC_ALARM, "ALARM TRIGGERED")
 
 def publish_gps():
     """Publishes GPS data."""
     if None in (configV.latitude, configV.longitude, configV.satellites):
         return
     gps_data = f"{configV.latitude},{configV.longitude},{configV.satellites}"
-    result = client.publish(MQTT_TOPIC_GPS, gps_data)
-    if result.rc == mqtt.MQTT_ERR_SUCCESS:
-        print(f"[MQTT] GPS Data Published: {gps_data}")
-    else:
-        print("[MQTT] Failed to Publish GPS Data!")
+    result = client.publish(TOPIC_GPS, gps_data)
+    
 
 def check_alarm():
     """Continuously checks if the alarm should be triggered."""
@@ -105,8 +98,9 @@ def mqtt_task():
     client.on_connect = on_connect
     client.on_message = on_message
     client.on_disconnect = on_disconnect  # ✅ Automatic reconnects
-    client.connect(MQTT_BROKER, MQTT_PORT, 60)
-    client.loop_start()  # ✅ Runs MQTT in the background
+    client.connect(BROKER, PORT, 60)
+    print("Running MQTT handler")
+    client.loop_start()  
 
     # ✅ Start the alarm check in a separate thread
     alarm_thread = threading.Thread(target=check_alarm, daemon=True)

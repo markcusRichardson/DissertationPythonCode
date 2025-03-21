@@ -6,10 +6,13 @@ import screen_system  # GUI Code
 
 def start_threads():
     print("[MAIN] Starting serial and MQTT threads...")
-    serial_thread = threading.Thread(target=Serial_handling.serial_task, daemon=True)
-    mqtt_thread = threading.Thread(target=mqtt_handler.mqtt_task, daemon=True)
     
+    # Start the serial handling thread
+    serial_thread = threading.Thread(target=Serial_handling.serial_task, daemon=True)
     serial_thread.start()
+    
+    # Start the MQTT handling thread
+    mqtt_thread = threading.Thread(target=mqtt_handler.mqtt_task, daemon=True)
     mqtt_thread.start()
 
 if __name__ == "__main__":
