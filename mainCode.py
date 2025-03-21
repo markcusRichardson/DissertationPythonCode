@@ -18,5 +18,4 @@ def start_threads():
 if __name__ == "__main__":
     start_threads()  # Start serial and MQTT tasks
 
-    print("[MAIN] Starting GUI...")
-    screen_system.start_screen()  # ✅ GUI must run on the main thread!
+    
