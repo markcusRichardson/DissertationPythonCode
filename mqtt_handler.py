@@ -3,7 +3,7 @@ import configV  # Configuration file for global variables
 import time
 import threading
 
-# MQTT Configuration
+# MQTT Configuration   
 BROKER = "localhost"
 PORT = 1883
 TOPICS = {
@@ -24,13 +24,14 @@ def on_connect(client, userdata, flags, rc):
     """Handles MQTT connection and re-subscribes to topics."""
     print("Connected mate")
     if rc == 0:
-        print("[MQTT] Connected Successfully!")
+        print("[MQTT] Connected Successfully! Subscribing to topics...")
     else:
         print(f"[MQTT] Connection failed with code {rc}")
 
     # ✅ Ensure re-subscription after reconnection
     for topic in TOPICS.values():
         client.subscribe(topic)
+        print(f"[MQTT] Subscribed to {topic}")
 
 def on_message(client, userdata, msg):
     """Processes incoming MQTT messages."""
@@ -40,20 +41,29 @@ def on_message(client, userdata, msg):
 
     if topic == TOPICS["LOCK"]:
         configV.lock_state = (payload == "lock")
+        print(f"[CONFIG] Lock state updated: {configV.lock_state}")
 
     elif topic == TOPICS["BRIGHTNESS_FRONT"]:
-        print(f"[DEBUG] Before: {configV.brightnessFront}")
+        print(f"[DEBUG] Before update: configV.brightnessFront = {configV.brightnessFront}")
         configV.brightnessFront = int(payload)
-        print(f"[DEBUG] After: {configV.brightnessFront}")
+        print(f"[DEBUG] After update: configV.brightnessFront = {configV.brightnessFront}")
+
+        # ✅ Send an MQTT message back to the phone to confirm the update
+        confirm_msg = f"Brightness Front Updated: {configV.brightnessFront}"
+        client.publish("bike/brightness/confirmation", confirm_msg)
+        print(f"[MQTT] Confirmation sent: {confirm_msg}")
 
     elif topic == TOPICS["BRIGHTNESS_MIDDLE"]:
         configV.brightnessMiddle = int(payload)
+        print(f"[CONFIG] Brightness Middle updated: {configV.brightnessMiddle}")
 
     elif topic == TOPICS["BRIGHTNESS_REAR"]:
         configV.brightnessRear = int(payload)
+        print(f"[CONFIG] Brightness Rear updated: {configV.brightnessRear}")
 
     elif topic == TOPICS["MODE"]:
         configV.mode = int(payload)
+        print(f"[CONFIG] Mode updated: {configV.mode}")
 
     elif topic == TOPICS["RADAR"]:
         configV.radar_alert = (payload == "detected")
@@ -100,7 +110,7 @@ def mqtt_task():
     client.on_message = on_message
     client.on_disconnect = on_disconnect  
     client.connect(BROKER, PORT, 60)
-    print("Running MQTT handler")
+    print("[MQTT] Running MQTT handler...")
     client.loop_start()  
 
     # ✅ Start alarm checking in a separate thread
