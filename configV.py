@@ -2,6 +2,8 @@
 mode = 0
 lock_state = False
 brightnessFront = 0
+if brightnessFront > 10:
+    print("Increased baby")
 brightnessRear = 0
 brightnessMiddle = 0
 brightnessLogo = 0

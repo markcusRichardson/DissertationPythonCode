@@ -17,5 +17,10 @@ def start_threads():
 
 if __name__ == "__main__":
     start_threads()  # Start serial and MQTT tasks
-
     
+    # Keep the main thread alive
+    try:
+        while True:
+            time.sleep(1)  # Sleep to prevent busy waiting
+    except KeyboardInterrupt:
+        print("[MAIN] Exiting...")
