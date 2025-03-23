@@ -2,8 +2,6 @@
 mode = 0
 lock_state = False
 brightnessFront = 0
-if brightnessFront > 10:
-    print("Increased baby")
 brightnessRear = 0
 brightnessMiddle = 0
 brightnessLogo = 0
@@ -18,11 +16,10 @@ date = 0
 time= 0
 timem = 0
 alarm_bool = False
+alarm_bool_reset = False
 
 # Radar and IR variables
 radar_reading = 0
-segments = [0,0,0,0]
-
-
+segments = 0
 
 
