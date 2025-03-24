@@ -20,6 +20,7 @@ alarm_bool_reset = False
 
 # Radar and IR variables
 radar_reading = 0
+radar_output = ""
 segments = 0
 
 

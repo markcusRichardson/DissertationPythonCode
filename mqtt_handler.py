@@ -16,6 +16,7 @@ TOPICS = {
     "ALARM": "bike/alarm",
     "GPS": "bike/gps",
     "RADAR": "bike/radar",
+    "RADAR_READING": "bike/radar_reading",
     "ALARM_BOOL_RESET": "bike/alarmReset",
 }
   
@@ -73,9 +74,26 @@ def publish_sensor_data():
         speed = configV.speed
         gps_data = f"{configV.latitude},{configV.longitude},{configV.satellites}, {configV.altitude}"
         radar = configV.segments
+        radar_reading=configV.radar_reading
+        radar_output = configV.radar_output
         client.publish(TOPICS["SPEED"], speed)
         client.publish(TOPICS["RADAR"], radar)
         client.publish(TOPICS["GPS"], gps_data)
+        if radar_reading == 1:
+            configV.radar_output == "Approaching Detected"
+            client.publish(TOPICS["RADAR_READING"], radar_output)
+        elif radar_reading == 2:
+            configV.radar_output == "Departing Detected"
+            client.publish(TOPICS["RADAR_READING", radar_output])
+        elif radar_reading == 3:
+            configV.radar_output == "Sustained approach"
+            client.publish(TOPICS["RADAR_READING", radar_output])
+        elif radar_reading == 4:
+            configV.radar_output == "Sustained away"
+            client.publish(TOPICS["RADAR_READING", radar_output])
+        else :
+            configV.radar_output = ""
+
         time.sleep(1)  
 
 # Start the MQTT Loop

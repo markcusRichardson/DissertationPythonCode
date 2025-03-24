@@ -2,7 +2,6 @@ import threading
 import time
 import Serial_handling
 import mqtt_handler
-import screen_system  # GUI Code
 
 def start_threads():
     print("[MAIN] Starting serial and MQTT threads...")

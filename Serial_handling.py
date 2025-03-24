@@ -26,11 +26,11 @@ def arduino1_decode(PORT_SERIAL):
     if PORT_SERIAL and PORT_SERIAL.in_waiting >= 20:
         START = PORT_SERIAL.read(1)
         if START == bytes([START_BYTE]):
-            DATA1 = PORT_SERIAL.read(18)
+            DATA1 = PORT_SERIAL.read(20)
             END = PORT_SERIAL.read(1)
             if END == bytes([END_BYTE]):
                 try:
-                    longitude, latitude, altitude, speed, satellites, date, time, timem, alarm_bool = struct.unpack("fffBHBHB", DATA1)
+                    longitude, latitude, altitude, speed, satellites, date, time, timem, alarm_bool = struct.unpack("fffBHHHHB", DATA1)
                     configV.longitude = longitude
                     configV.latitude = latitude
                     configV.altitude = altitude
@@ -59,7 +59,10 @@ def arduino2_decode(PORT_SERIAL1):
 def arduino_encode(serial_port, mode, brightnessFront, brightnessRear, brightnessMiddle, lock_state, alarm_state, brightnessLogo, alarm_bool_reset):
     if serial_port:
         try:
-            packet = struct.pack("BBBBBBB", mode, lock_state, alarm_state, brightnessFront, brightnessMiddle, brightnessRear, brightnessLogo, alarm_bool_reset)
+            lock_state = int(lock_state)  # Convert bool to byte (0 or 1)
+            alarm_state = int(alarm_state)
+            alarm_bool_reset = int(alarm_bool_reset)
+            packet = struct.pack("BBBBBBBB", mode, lock_state, alarm_state, brightnessFront, brightnessMiddle, brightnessRear, brightnessLogo, alarm_bool_reset)
             serial_port.write(bytes([START_BYTE]))
             serial_port.write(packet)
             serial_port.write(bytes([END_BYTE]))
@@ -69,16 +72,22 @@ def arduino_encode(serial_port, mode, brightnessFront, brightnessRear, brightnes
 def serial_task():
     global arduino_1, arduino_2
     while True:
-        if arduino_1 is None:
-            arduino_1 = connect_arduino(SERIAL_PORT_1)
-        if arduino_2 is None:
-            arduino_2 = connect_arduino(SERIAL_PORT_2)
-        
-        if arduino_1:
-            arduino1_decode(arduino_1)
-            arduino_encode(arduino_1, configV.mode, configV.brightnessFront, configV.brightnessRear, configV.brightnessMiddle, configV.lock_state, configV.alarm_bool, configV.brightnessLogo, configV.alarm_bool_reset)
-        
-        if arduino_2:
-            arduino2_decode(arduino_2)
-        
+        try:
+            if arduino_1 is None:
+                arduino_1 = connect_arduino(SERIAL_PORT_1)
+            if arduino_2 is None:
+                arduino_2 = connect_arduino(SERIAL_PORT_2)
+
+            if arduino_1:
+                arduino1_decode(arduino_1)
+                arduino_encode(arduino_1, configV.mode, configV.brightnessFront, configV.brightnessRear, configV.brightnessMiddle, configV.lock_state, configV.alarm_bool, configV.brightnessLogo, configV.alarm_bool_reset)
+
+            if arduino_2:
+                arduino2_decode(arduino_2)
+
+        except serial.SerialException as e:
+            print(f"[ERROR] Serial Connection Lost: {e}")
+            time.sleep(2)  # Wait before retrying
+
         time.sleep(0.1)
+
