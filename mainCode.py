@@ -22,4 +22,4 @@ if __name__ == "__main__":
         while True:
             time.sleep(1)  # Sleep to prevent busy waiting
     except KeyboardInterrupt:
-        print("[MAIN] Exiting...")
+        pass
