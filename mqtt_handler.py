@@ -1,40 +1,72 @@
-import paho.mqtt.client as mqtt
-import configV  # Configuration file for global variables
-import time
-import threading
+# ===============================================================
+# Smart Bike System – MQTT Communication Handler
+# ---------------------------------------------------------------
+# This script uses the Paho MQTT client to handle communication
+# between the Raspberry Pi and external devices (e.g., smartphone app).
+# It supports:
+#   - Receiving control commands (lock, brightness, mode, alarm reset)
+#   - Publishing live telemetry data (GPS, speed, radar, etc.)
+#   - Notifying on alarm activation
+# ===============================================================
 
-# MQTT Configuration   
-BROKER = "localhost"
+import paho.mqtt.client as mqtt    # MQTT library
+import configV                     # Shared configuration values
+import time                        # For timing/publishing intervals
+import threading                   # For concurrent background tasks
+
+# ---------------------------------------------------------------
+# MQTT Configuration
+# ---------------------------------------------------------------
+BROKER = "localhost"  # MQTT broker (change if remote or cloud-based)
 PORT = 1883
+
+# Topics dictionary for consistency and maintainability
 TOPICS = {
     "LOCK": "bike/lock",
     "BRIGHTNESS_FRONT": "bike/brightness/front",
     "BRIGHTNESS_MIDDLE": "bike/brightness/middle",
     "BRIGHTNESS_REAR": "bike/brightness/rear",
-    "BRIGHTNESS_LOGO": "bike/brightness/logo ",
+    "BRIGHTNESS_LOGO": "bike/brightness/logo",
     "MODE": "bike/mode",
     "ALARM": "bike/alarm",
-    "GPS": "bike/gps",
     "RADAR": "bike/radar",
+    "LONGITUDE": "bike/longitude",
+    "LATITUDE": "bike/latitude",
+    "SPEED": "bike/speed",
+    "SATELLITES": "bike/satellites",
+    "ALTITUDE": "bike/altitude",
     "RADAR_READING": "bike/radar_reading",
     "ALARM_BOOL_RESET": "bike/alarmReset",
 }
-  
-# MQTT Client Setup
+
+# Create MQTT client instance
 client = mqtt.Client()
 
+# ---------------------------------------------------------------
+# Callback: On Connection to Broker
+# ---------------------------------------------------------------
 def on_connect(client, userdata, flags, rc):
-    # Ensure re-subscription after reconnection
+    """
+    Subscribes to relevant topics upon connecting to the MQTT broker.
+    Ensures subscriptions are re-applied after reconnections.
+    """
     for topic in TOPICS.values():
         client.subscribe(topic)
 
+# ---------------------------------------------------------------
+# Callback: On Receiving MQTT Messages
+# ---------------------------------------------------------------
 def on_message(client, userdata, msg):
+    """
+    Handles incoming MQTT messages and updates shared configuration
+    values accordingly to influence system behavior.
+    """
     topic = msg.topic
     payload = msg.payload.decode()
 
     if topic == TOPICS["LOCK"]:
-        configV.lock_state = payload == "1"  
-        
+        configV.lock_state = payload == "1"
+
     elif topic == TOPICS["BRIGHTNESS_FRONT"]:
         configV.brightnessFront = int(payload)
 
@@ -43,67 +75,107 @@ def on_message(client, userdata, msg):
 
     elif topic == TOPICS["BRIGHTNESS_REAR"]:
         configV.brightnessRear = int(payload)
-    
+
     elif topic == TOPICS["BRIGHTNESS_LOGO"]:
         configV.brightnessLogo = int(payload)
-        
+
     elif topic == TOPICS["MODE"]:
         configV.mode = int(payload)
 
     elif topic == TOPICS["ALARM_BOOL_RESET"]:
-        configV.alarm_bool_reset = payload == "1" 
+        configV.alarm_bool_reset = payload == "1"
 
+# ---------------------------------------------------------------
+# Publish Alarm Notification
+# ---------------------------------------------------------------
 def publish_alarm():
-    result = client.publish(TOPICS["ALARM"], "ALARM TRIGGERED")
+    """
+    Publishes an alert message to notify that the alarm condition is active.
+    """
+    client.publish(TOPICS["ALARM"], "ALARM TRIGGERED")
 
-
+# ---------------------------------------------------------------
+# Alarm Monitoring Loop
+# ---------------------------------------------------------------
 def check_alarm():
+    """
+    Continuously checks if the alarm has been triggered
+    and publishes a notification when necessary.
+    """
     while True:
         if configV.alarm_bool:
             publish_alarm()
         time.sleep(0.1)
 
+# ---------------------------------------------------------------
+# Callback: On Disconnection
+# ---------------------------------------------------------------
 def on_disconnect(client, userdata, rc):
+    """
+    Attempts to reconnect if the MQTT connection is lost.
+    """
     try:
         client.reconnect()
     except Exception as err:
-        pass
+        pass  # Optional: log error
 
+# ---------------------------------------------------------------
+# Sensor Data Publishing Loop
+# ---------------------------------------------------------------
 def publish_sensor_data():
+    """
+    Publishes telemetry data (e.g., GPS, speed, radar) to MQTT topics every second.
+    Also interprets radar reading values into descriptive messages.
+    """
     while True:
-        speed = configV.speed
-        gps_data = f"{configV.latitude},{configV.longitude},{configV.satellites}, {configV.altitude}"
-        radar = configV.segments
-        radar_reading=configV.radar_reading
-        radar_output = configV.radar_output
+        # Gather values to publish
+        speed = str(configV.speed)
+        latitude = str(configV.latitude)
+        longitude = str(configV.longitude)
+        satellites = str(configV.satellites)
+        altitude = str(configV.altitude)
+        radar = str(configV.segments)
+        radar_reading = configV.radar_reading
+
+        # Publish each value
         client.publish(TOPICS["SPEED"], speed)
         client.publish(TOPICS["RADAR"], radar)
-        client.publish(TOPICS["GPS"], gps_data)
+        client.publish(TOPICS["LONGITUDE"], longitude)
+        client.publish(TOPICS["LATITUDE"], latitude)
+        client.publish(TOPICS["ALTITUDE"], altitude)
+        client.publish(TOPICS["SATELLITES"], satellites)
+
+        # Determine radar state and publish human-readable message
         if radar_reading == 1:
-            configV.radar_output == "Approaching Detected"
-            client.publish(TOPICS["RADAR_READING"], radar_output)
+            configV.radar_output = "Approaching Detected"
         elif radar_reading == 2:
-            configV.radar_output == "Departing Detected"
-            client.publish(TOPICS["RADAR_READING", radar_output])
+            configV.radar_output = "Departing Detected"
         elif radar_reading == 3:
-            configV.radar_output == "Sustained approach"
-            client.publish(TOPICS["RADAR_READING", radar_output])
+            configV.radar_output = "Sustained approach"
         elif radar_reading == 4:
-            configV.radar_output == "Sustained away"
-            client.publish(TOPICS["RADAR_READING", radar_output])
-        else :
-            configV.radar_output = ""
+            configV.radar_output = "Sustained away"
+        else:
+            configV.radar_output = "No Detection"
 
-        time.sleep(1)  
+        client.publish(TOPICS["RADAR_READING"], configV.radar_output)
+        time.sleep(1)  # Publish interval
 
-# Start the MQTT Loop
+# ---------------------------------------------------------------
+# Main MQTT Task Function (Entry Point for Thread)
+# ---------------------------------------------------------------
 def mqtt_task():
+    """
+    Initializes MQTT client, connects to the broker, and starts the message loop.
+    Launches two threads:
+        - One to monitor the alarm state
+        - One to periodically publish sensor data
+    """
     client.on_connect = on_connect
     client.on_message = on_message
-    client.on_disconnect = on_disconnect  
+    client.on_disconnect = on_disconnect
     client.connect(BROKER, PORT, 60)
-    client.loop_start()  
+    client.loop_start()  # Starts non-blocking loop in background
 
-    # Start alarm checking in a separate thread
+    # Background threads for alarm and telemetry
     threading.Thread(target=check_alarm, daemon=True).start()
     threading.Thread(target=publish_sensor_data, daemon=True).start()
